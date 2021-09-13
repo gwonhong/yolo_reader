@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>yolo_reader</name>
+  <version>0.1.0</version>
+  <description>The yolo_reader package</description>
+
+  <maintainer email="gwonhong.dev@gmail.com">gwonhong</maintainer>
+
+  <license>MIT</license>
+  <url type="website"></url>
+
+  <author email="gwonhong.dev@gmail.com">gwonhong</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>BoundingBox</build_depend>
+  <build_depend>BoundingBoxes</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>BoundingBox</build_export_depend>
+  <build_export_depend>BoundingBoxes</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>BoundingBox</exec_depend>
+  <exec_depend>BoundingBoxes</exec_depend>
+
+  <export>
+  </export>
+</package>
