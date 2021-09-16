@@ -8,29 +8,36 @@
 #include "yolo_reader/BoundingBox.h"
 #include "yolo_reader/BoundingBoxes.h"
 
-int64_t x, y = 0;
+sensor_msgs::PointCloud pointcloud;
+
 void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
     std::vector<yolo_reader::BoundingBox> things = msg->bounding_boxes;
     for (std::vector<yolo_reader::BoundingBox>::iterator thing = things.begin(); thing != things.end(); thing++) {
         if (thing->Class == "bottle") {
             ROS_INFO("@@bottle detected@@");
-            x = (thing->xmin + thing->xmax) / 2;
-            y = (thing->ymin + thing->ymax) / 2;
+            int64_t x = (thing->xmin + thing->xmax) / 2;
+            int64_t y = (thing->ymin + thing->ymax) / 2;
             ROS_INFO("x: [%ld] && y: [%ld]\n", x, y);
+
+            for (int i = 0; i < pointcloud.points.size(); i++) {
+                //ROS_INFO("%d/%d is read from clouds\n", i, pointcloud.points.size()); 끝까지 도나 확인해보려고 넣었는데 잘 돌음
+                float dx = pointcloud.points[i].x - (float)x;
+                float dy = pointcloud.points[i].y - (float)y;
+                if (dx < 0) dx = -dx;
+                if (dy < 0) dy = -dy;
+                if (dx < 1 && dy < 1) {
+                    float distance = pointcloud.points[i].z;
+                    ROS_INFO("@!@ the distance is [%f]\n", distance);
+                    break;
+                }
+            }
         }
     }
     ROS_INFO("\n");
 }
 
 void distance_sensor_Callback(const sensor_msgs::PointCloud2::ConstPtr &msg) {
-    sensor_msgs::PointCloud converted_cloud;
-    sensor_msgs::convertPointCloud2ToPointCloud(*msg, converted_cloud);
-    int i;
-    for (i = 0; i < converted_cloud.points.size(); i++) {
-        // ROS_INFO("X : %f", converted_cloud.points[i].x);
-        // ROS_INFO("Y : %f", converted_cloud.points[i].y);
-        // ROS_INFO("Z : %f", converted_cloud.points[i].z);
-    }
+    sensor_msgs::convertPointCloud2ToPointCloud(*msg, pointcloud);
 }
 
 int main(int argc, char **argv) {
