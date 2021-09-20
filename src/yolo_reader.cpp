@@ -19,11 +19,11 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
             int64_t y = (thing->ymin + thing->ymax) / 2;
             ROS_INFO("x: [%ld] && y: [%ld]\n", x, y);
 
-            for (int i = 0; i < pointcloud.points.size(); i++) {                     //다 도는게 너무 오래걸림
-                ROS_INFO("%d/%d is read from clouds", i, pointcloud.points.size());  //모든 점을 다 도는지 개수로 확인
+            for (int i = 0; i < pointcloud.points.size(); i++) {  //다 도는게 너무 오래걸림
+                // ROS_INFO("%d/%d is read from clouds", i, pointcloud.points.size());  //모든 점을 다 도는지 개수로 확인
                 float dx = pointcloud.points[i].x - (float)x;
                 float dy = pointcloud.points[i].y - (float)y;
-                ROS_INFO("%f, %f away from detected point\n", dx, dy);  //확실히 coordinate가 다름.
+                // ROS_INFO("%f, %f away from detected point\n", dx, dy);  //확실히 coordinate가 다름.
                 if (dx < 0) dx = -dx;
                 if (dy < 0) dy = -dy;
                 if (dx < 1 && dy < 1) {
