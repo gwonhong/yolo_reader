@@ -4,14 +4,16 @@
 #include "yolo_reader/BoundingBoxes.h"
 
 rs2::pipeline p;
-
-p.start();
+ros::Publisher detect_pub;
 
 void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
     std::vector<yolo_reader::BoundingBox> things = msg->bounding_boxes;
+    int is_detected = 0;
+    std_msgs::Float64MultiArray detected_cars;
     for (std::vector<yolo_reader::BoundingBox>::iterator thing = things.begin(); thing != things.end(); thing++) {
-        if (thing->Class == "bottle") {
-            ROS_INFO("@@bottle detected@@");
+        if (thing->Class == "car") {
+            is_detected = 1;
+            ROS_INFO("CAR is DETECTED");
             // Block program until frames arrive
             rs2::frameset frames = p.wait_for_frames();
 
@@ -25,19 +27,26 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
             float detected_depth = depth.get_distance(x, y);
 
             ROS_INFO("x: [%ld] && y: [%ld] && depth: [%f]\n", x, y, detected_depth);
+            detected_cars.data.push_back(detected_depth);
 
-            ROS_INFO("DONE!\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            ROS_INFO("Loop Finished\n");
         }
     }
-    ROS_INFO("\n");
+    if (is_detected == 1) {
+        detected_pub.publish(detected_cars);
+    }
+    ROS_INFO("Done\n\n");
 }
 
 int main(int argc, char **argv) {
+    p.start();
+
     ros::init(argc, argv, "yolo_reader");
 
     ros::NodeHandle n;
 
     ros::Subscriber image_sub = n.subscribe("/darknet_ros/bounding_boxes", 100, YOLO_Callback);
+    detect_pub = n.advertise<std_msgs::Float64MultiArray>("detected_cars", 100);
 
     ros::spin();
 
