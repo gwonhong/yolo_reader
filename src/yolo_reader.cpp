@@ -1,5 +1,6 @@
 #include "librealsense2/rs.hpp"
 #include "ros/ros.h"
+#include "std_msgs/Float64MultiArray"
 #include "yolo_reader/BoundingBox.h"
 #include "yolo_reader/BoundingBoxes.h"
 
@@ -33,7 +34,7 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
         }
     }
     if (is_detected == 1) {
-        detected_pub.publish(detected_cars);
+        detect_pub.publish(detected_cars);
     }
     ROS_INFO("Done\n\n");
 }
