@@ -1,6 +1,6 @@
 #include "librealsense2/rs.hpp"
 #include "ros/ros.h"
-#include "std_msgs/Float64MultiArray"
+#include "std_msgs/Float64MultiArray.h"
 #include "yolo_reader/BoundingBox.h"
 #include "yolo_reader/BoundingBoxes.h"
 
