@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include "sensor_msgs/Image.msg"
 #include "std_msgs/UInt8.h"
 #include "std_msgs/UInt8MultiArray.h"
 #include "yolo_reader/BoundingBox.h"
@@ -7,10 +8,11 @@
 std_msgs::UInt8MultiArray depths;
 ros::Publisher detect_pub;
 
-void depth_Callback(const --::ConstPtr &msg) {
-    for (std::vector<std_msgs::UInt8>::iterator depth = msg ~~iterate msg->data) {
-        depths.data.push_back(*depth);  //iterate whole map and push them all to depths
-    }
+void depth_Callback(const sensor_msgs::Image::ConstPtr &msg) {
+    // for (std::vector<std_msgs::UInt8>::iterator depth = msg ~~iterate msg->data) {
+    //     depths.data.push_back(*depth);  //iterate whole map and push them all to depths
+    // }
+    ROS_INFO("height: %d && width: %d\n\n\n\n", msg->height, msg->width);
 }
 
 void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
@@ -47,7 +49,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
 
     ros::Subscriber image_sub = n.subscribe("/darknet_ros/bounding_boxes", 100, YOLO_Callback);
-    ros::Subscriber depth_sub = n.subscribe("~~image_rect_raw", 100, depth_Callback);  //update depth map everytime
+    ros::Subscriber depth_sub = n.subscribe("/camera/aligned_depth_to_color/image_raw", 100, depth_Callback);  //update depth map everytime
 
     detect_pub = n.advertise<std_msgs::Float64MultiArray>("detected_cars", 100);
 
