@@ -12,10 +12,10 @@
 #include "yolo_reader/BoundingBox.h"
 #include "yolo_reader/BoundingBoxes.h"
 
-ros::Publisher detect_pub;
+ros::Publisher detect_pub;     //made it global variable so that it can be called at subscriber function
 cv_bridge::CvImagePtr cv_ptr;  //will be keep updated
 
-void depth_Callback(const sensor_msgs::Image::ConstPtr &msg) {
+void depth_Callback(const sensor_msgs::Image::ConstPtr &msg) {  //1.get depth map keep updated
     //simply share the image since we will not modify it
     try {
         cv_ptr = cv_bridge::toCvShare(msg, "16uc1");  //16bit unsigned int
@@ -25,7 +25,7 @@ void depth_Callback(const sensor_msgs::Image::ConstPtr &msg) {
     }
 }
 
-void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
+void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {  //2.keep check if YOLO detected car
     std::vector<yolo_reader::BoundingBox> things = msg->bounding_boxes;
     int is_detected = 0;
     std_msgs::UInt16MultiArray detected_car_depths;
@@ -37,16 +37,16 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
             int64_t x = (thing->xmin + thing->xmax) / 2;
             int64_t y = (thing->ymin + thing->ymax) / 2;
 
-            int16_t detected_car_depth = cv_ptr->image.at<int16_t>(x, y);
-            detected_car_depths.data.push_back(detected_car_depth);
+            int16_t detected_car_depth = cv_ptr->image.at<int16_t>(x, y);  //get depth of (x,y) from cv::Mat::Image
+            detected_car_depths.data.push_back(detected_car_depth);        //push it to depth array
 
-            ROS_INFO("x: [%ld] && y: [%ld] && depth: [%d]\n", x, y, detected_car_depth);
+            ROS_INFO("x: [%ld] && y: [%ld] && depth: [%d]\n", x, y, detected_car_depth);  //for debugging
         }
     }
     ROS_INFO("Loop Finished\n");
     if (is_detected == 1) {
         ROS_INFO("detect_pub published\n");
-        detect_pub.publish(detected_car_depths);
+        detect_pub.publish(detected_car_depths);  //3. publish the depth array only when car is detected
     }
     ROS_INFO("Done\n\n");
 }
@@ -56,11 +56,12 @@ int main(int argc, char **argv) {
 
     ros::NodeHandle n;
 
-    ros::Subscriber image_sub = n.subscribe("/darknet_ros/bounding_boxes", 100, YOLO_Callback);
     image_transport::ImageTransport it(n);
     image_transport::Subscriber sub = it.subscribe("camera/depth/image_rect_raw", 1, depth_Callback);
 
-    detect_pub = n.advertise<std_msgs::UInt16MultiArray>("detected_cars", 100);
+    ros::Subscriber image_sub = n.subscribe("/darknet_ros/bounding_boxes", 100, YOLO_Callback);
+
+    detect_pub = n.advertise<std_msgs::UInt16MultiArray>("detected_cars", 100);  //it is defined as global variable
 
     ros::spin();
 
