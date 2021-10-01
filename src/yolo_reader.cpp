@@ -38,13 +38,13 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {  //2.keep 
             int64_t y = (thing->ymin + thing->ymax) / 2;
 
             int16_t detected_car_depth = cv_ptr->image.at<int16_t>(x, y);  //get depth of (x,y) from cv::Mat::Image
-            ROS_INFO("here?");
-            detected_car_depths.data.push_back(detected_car_depth);  //push it to depth array
+            detected_car_depths.data.push_back(detected_car_depth);        //push it to depth array
 
             ROS_INFO("x: [%ld] && y: [%ld] && depth: [%d]\n", x, y, detected_car_depth);  //for debugging
         }
     }
     ROS_INFO("Loop Finished\n");
+    ROS_INFO("size: %d", detected_car_depths.data.size());
     if (is_detected == 1) {
         ROS_INFO("detect_pub published\n");
         detect_pub.publish(detected_car_depths);  //3. publish the depth array only when car is detected
