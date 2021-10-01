@@ -12,13 +12,13 @@
 #include "yolo_reader/BoundingBox.h"
 #include "yolo_reader/BoundingBoxes.h"
 
-ros::Publisher detect_pub;     //made it global variable so that it can be called at subscriber function
-cv_bridge::CvImagePtr cv_ptr;  //will be keep updated
+ros::Publisher detect_pub;          //made it global variable so that it can be called at subscriber function
+cv_bridge::CvImageConstPtr cv_ptr;  //will be keep updated
 
 void depth_Callback(const sensor_msgs::Image::ConstPtr &msg) {  //1.get depth map keep updated
     //simply share the image since we will not modify it
     try {
-        cv_ptr = cv_bridge::toCvShare(msg, "16uc1");  //16bit unsigned int
+        cv_ptr = cv_bridge::toCvShare(msg, "16UC1");  //16bit unsigned int
     } catch (cv_bridge::Exception &e) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
@@ -30,7 +30,7 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {  //2.keep 
     int is_detected = 0;
     std_msgs::UInt16MultiArray detected_car_depths;
     for (std::vector<yolo_reader::BoundingBox>::iterator thing = things.begin(); thing != things.end(); thing++) {
-        if (thing->Class == "car") {
+        if (thing->Class == "bottle") {
             is_detected = 1;
             ROS_INFO("CAR is DETECTED");
 
@@ -38,7 +38,8 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {  //2.keep 
             int64_t y = (thing->ymin + thing->ymax) / 2;
 
             int16_t detected_car_depth = cv_ptr->image.at<int16_t>(x, y);  //get depth of (x,y) from cv::Mat::Image
-            detected_car_depths.data.push_back(detected_car_depth);        //push it to depth array
+            ROS_INFO("here?");
+            detected_car_depths.data.push_back(detected_car_depth);  //push it to depth array
 
             ROS_INFO("x: [%ld] && y: [%ld] && depth: [%d]\n", x, y, detected_car_depth);  //for debugging
         }
