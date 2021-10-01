@@ -1,19 +1,16 @@
 cmake_minimum_required(VERSION 3.1.0)
 project(yolo_reader)
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg)
-
-# # Enable C++11
-# set(CMAKE_CXX_STANDARD 11)
-# set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+find_package(catkin REQUIRED COMPONENTS roscpp message_generation message_runtime std_msgs sensor_msgs image_transport)
 
 add_message_files(FILES BoundingBox.msg BoundingBoxes.msg)
 
-generate_messages(DEPENDENCIES std_msgs)
+generate_messages(DEPENDENCIES std_msgs sensor_msgs)
 
-catkin_package()
-add_executable(yolo_reader src/yolo_reader.cpp)
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs sensor_msgs) 
 
 include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_executable(yolo_reader src/yolo_reader.cpp)
 
 target_link_libraries(yolo_reader ${catkin_LIBRARIES})

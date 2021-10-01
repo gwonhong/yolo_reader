@@ -1,24 +1,34 @@
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "ros/ros.h"
-#include "sensor_msgs/Image.msg"
-#include "std_msgs/UInt8.h"
-#include "std_msgs/UInt8MultiArray.h"
+#include "sensor_msgs/Image.h"
+// #include "sensor_msgs/image_encodings.h"
+#include "std_msgs/UInt16.h"
+#include "std_msgs/UInt16MultiArray.h"
 #include "yolo_reader/BoundingBox.h"
 #include "yolo_reader/BoundingBoxes.h"
 
-std_msgs::UInt8MultiArray depths;
 ros::Publisher detect_pub;
+cv_bridge::CvImagePtr cv_ptr;  //will be keep updated
 
 void depth_Callback(const sensor_msgs::Image::ConstPtr &msg) {
-    // for (std::vector<std_msgs::UInt8>::iterator depth = msg ~~iterate msg->data) {
-    //     depths.data.push_back(*depth);  //iterate whole map and push them all to depths
-    // }
-    ROS_INFO("height: %d && width: %d\n\n\n\n", msg->height, msg->width);
+    //simply share the image since we will not modify it
+    try {
+        cv_ptr = cv_bridge::toCvShare(msg, "16uc1");  //16bit unsigned int
+    } catch (cv_bridge::Exception &e) {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
 }
 
 void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
     std::vector<yolo_reader::BoundingBox> things = msg->bounding_boxes;
     int is_detected = 0;
-    std_msgs::UInt8MultiArray detected_cars;
+    std_msgs::UInt16MultiArray detected_car_depths;
     for (std::vector<yolo_reader::BoundingBox>::iterator thing = things.begin(); thing != things.end(); thing++) {
         if (thing->Class == "car") {
             is_detected = 1;
@@ -27,31 +37,30 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {
             int64_t x = (thing->xmin + thing->xmax) / 2;
             int64_t y = (thing->ymin + thing->ymax) / 2;
 
-            std_msgs::UInt8 detected_depth = depths[x + y * width];  //depth of (x,y)
+            int16_t detected_car_depth = cv_ptr->image.at<int16_t>(x, y);
+            detected_car_depths.data.push_back(detected_car_depth);
 
-            ROS_INFO("x: [%ld] && y: [%ld] && depth: [%f]\n", x, y, detected_depth);
-            detected_cars.data.push_back(detected_depth);
-
-            ROS_INFO("Loop Finished\n");
+            ROS_INFO("x: [%ld] && y: [%ld] && depth: [%d]\n", x, y, detected_car_depth);
         }
     }
+    ROS_INFO("Loop Finished\n");
     if (is_detected == 1) {
-        detect_pub.publish(detected_cars);
+        ROS_INFO("detect_pub published\n");
+        detect_pub.publish(detected_car_depths);
     }
     ROS_INFO("Done\n\n");
 }
 
 int main(int argc, char **argv) {
-    p.start();
-
     ros::init(argc, argv, "yolo_reader");
 
     ros::NodeHandle n;
 
     ros::Subscriber image_sub = n.subscribe("/darknet_ros/bounding_boxes", 100, YOLO_Callback);
-    ros::Subscriber depth_sub = n.subscribe("/camera/aligned_depth_to_color/image_raw", 100, depth_Callback);  //update depth map everytime
+    image_transport::ImageTransport it(n);
+    image_transport::Subscriber sub = it.subscribe("camera/depth/image_rect_raw", 1, depth_Callback);
 
-    detect_pub = n.advertise<std_msgs::Float64MultiArray>("detected_cars", 100);
+    detect_pub = n.advertise<std_msgs::UInt16MultiArray>("detected_cars", 100);
 
     ros::spin();
 
