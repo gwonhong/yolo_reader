@@ -37,6 +37,8 @@ void YOLO_Callback(const yolo_reader::BoundingBoxes::ConstPtr &msg) {  //2.keep 
             int64_t x = (thing->xmin + thing->xmax) / 2;
             int64_t y = (thing->ymin + thing->ymax) / 2;
 
+            ROS_INFO("hi");
+
             int16_t detected_car_depth = cv_ptr->image.at<int16_t>(x, y);  //get depth of (x,y) from cv::Mat::Image
             detected_car_depths.data.push_back(detected_car_depth);        //push it to depth array
 
@@ -58,7 +60,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
 
     image_transport::ImageTransport it(n);
-    image_transport::Subscriber sub = it.subscribe("camera/depth/image_rect_raw", 1, depth_Callback);
+    image_transport::Subscriber sub = it.subscribe("camera/depth/image_rect_raw", 100, depth_Callback);
 
     ros::Subscriber image_sub = n.subscribe("/darknet_ros/bounding_boxes", 100, YOLO_Callback);
 
